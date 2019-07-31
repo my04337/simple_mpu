@@ -14,25 +14,43 @@ namespace mpu
 	{
 		Nop = 0x00,
 
-		MoveRR  = 0x01, // suf(To(Reg[3] | Mod[2]) | From(Reg[3] | Mod[2])) - レジスタ(メモリ)→レジスタ(メモリ)間転送
-		MoveRC  = 0x02, // suf(To(Reg[3] | Mod[2]) From(Mod[2]) opc<0>(Val[16]) - 即値→レジスタ(メモリ)間転送		
+		MoveRR  = 0x01, // suf:To(Reg+Access[3+2])|From(Reg+Access[3+2]) - 汎用レジスタ→汎用レジスタ間転送
+		MoveRC  = 0x02, // suf:To(Reg+Access[3+2] & opc<0>(Val[16]) - 即値→汎用レジスタ間転送		
+
+		MoveRS  = 0x03, // suf:To(Reg+Access[3+2])|From(SpecialReg[3]) - 特殊レジスタ→汎用レジスタ間転送
 
 		Halt = 0x3F,
 	};
 
-	// レジスタ指定 : 3bit (+ 2bit)
+	// 汎用レジスタ指定 : 3bit
 	enum class Reg : Byte {
 		R0 = 0, R1 = 1, R2 = 2, R3 = 3,
 		R4 = 4, R5 = 5, R6 = 6, R7 = 7,
 	};
-	// move修飾 : 2bit
+
+	// 汎用レジスタ 直接/間接アクセス指定 (3 + 1bit)
+	struct RegWithAccess {
+		Reg reg;
+		bool indirect;
+		constexpr RegWithAccess(Reg reg, bool indirect = false) : reg(reg), indirect(indirect) {}
+
+		constexpr Byte to_bits()const noexcept { return static_cast<Byte>((static_cast<Byte>(reg) << 1) | ( indirect ? 0x01 : 0x00)); }
+		static constexpr RegWithAccess from_bits(Word bits) { return {static_cast<Reg>((bits & 0x0E) >> 1), ((bits & 0x01) ? true : false)}; }
+
+	};
+	inline constexpr RegWithAccess RegIndirect(Reg reg) { return {reg, true}; }
+
+	// 汎用レジスタ修飾 : 1bit
 	enum class RegAccess : Byte
 	{
-		Reg   = 0x00, // 無修飾(レジスタ番号, 即値など)
-		Far   = 0x01, // 直接指定 (アドレス空間の0x0000～0x00FFまでのアクセス可能)
-		Near  = 0x02, // 間接指定 : セグメントレジスタからのオフセット指定
-		Base  = 0x03, // 間接指定 : ベースレジスタからのオフセット指定
+		Reg  = 0x00, // 無修飾(レジスタ番号, 即値など)
+		Addr = 0x01, // 直接指定 (アドレス空間の0x0000～0x00FFまでのアクセス可能)
 	};	
+
+	// 特殊レジスタ指定 : 3bit (+ 2bit)
+	enum class SpecialReg : Byte {
+		DS = 0, // データセグメント
+	};
 
 	// アセンブラ : 命令組み立てクラス
 	class Assembler
@@ -44,12 +62,11 @@ namespace mpu
 
 		Assembler& nop();
 		Assembler& halt();
-		
-		Assembler& move(Reg to, Reg from) { return move(to, RegAccess::Reg, from, RegAccess::Reg); }
-		Assembler& move(Reg to, RegAccess to_acc, Reg from, RegAccess from_acc);
-		
-		Assembler& move(Reg to, Word val) { return move(to, RegAccess::Reg, val); }
-		Assembler& move(Reg to, RegAccess to_acc, Word val);
+
+		Assembler& move(RegWithAccess to, Word val);
+		Assembler& move(RegWithAccess to, RegWithAccess from);
+		Assembler& move(RegWithAccess to, SpecialReg from);
+
 		
 	private:
 		Assembler& emit(Word v) { _mem.write<Word>(_pos, v); _pos += sizeof(Word); return *this; }

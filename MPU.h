@@ -32,11 +32,9 @@ namespace mpu
 		template<class T, typename std::enable_if_t<std::is_scalar_v<T>>* = nullptr>
 		T fetch() { T v{_mem.read<T>(_pc)}; _pc += sizeof(T); return v; }
 
-		Word reg_read(Reg reg)const { return reg_read(reg, RegAccess::Reg); }
-		Word reg_read(Reg reg, RegAccess access)const;
+		Word reg_read(RegWithAccess reg)const;
 
-		void reg_write(Reg reg, Word val) { reg_write(reg, RegAccess::Reg, val); }
-		void reg_write(Reg reg, RegAccess access, Word val);
+		void reg_write(RegWithAccess reg, Word val);
 
 				
 		void op_nop(Word ins);
@@ -48,7 +46,6 @@ namespace mpu
 		Memory& _mem;
 		std::array<Word, 8> _reg; // 汎用レジスタ
 		Word _pc = 0; // プログラムカウンタ
-		Word _seg = 0; // セグメントレジスタ
 		Word _sp = 0; // スタックポインタ
 		Word _bp = 0; // ベースポインタ
 		bool _halt = false;

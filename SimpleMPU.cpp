@@ -18,7 +18,7 @@ int main()
 	as.move(Reg::R0, 1);
 	as.move(Reg::R1, Reg::R0);
 	as.move(Reg::R4, 0x0080);
-	as.move(Reg::R4, RegAccess::Far, 0xCCCC);
+	as.move(RegIndirect(Reg::R4), 0xCCCC);
 	as.halt();
 
 	std::cout << ">>> Executing" << std::endl;

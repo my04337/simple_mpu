@@ -37,7 +37,6 @@ void MPU::dump()const
 {
 	std::cout 
 		<< "PC:" << std::hex << std::setw(4) << std::setfill('0') << _pc << " "
-		<< "SR:" << std::hex << std::setw(4) << std::setfill('0') << _seg << " "
 		<< "SP:" << std::hex << std::setw(4) << std::setfill('0') << _sp << " "
 		<< "BP:" << std::hex << std::setw(4) << std::setfill('0') << _bp << std::ends;
 	for(size_t i=0; i<_reg.size(); ++i) {
@@ -45,25 +44,22 @@ void MPU::dump()const
 	}
 	std::cout << std::endl;
 }
-Word MPU::reg_read(Reg reg, RegAccess access)const
+Word MPU::reg_read(RegWithAccess reg)const
 {
-	Word reg_value = _reg[static_cast<size_t>(reg)];
-	switch (access) {
-	case RegAccess::Reg:  return reg_value;
-	case RegAccess::Far:  return _mem.read<Word>(reg_value);
-	case RegAccess::Near: return _mem.read<Word>(_seg + reg_value);
-	case RegAccess::Base: return _mem.read<Word>(_bp + reg_value);
+	Word reg_value = _reg[static_cast<size_t>(reg.reg)];
+	if (reg.indirect) {
+		return _mem.read<Word>(reg_value);
+	} else {
+		return reg_value;
 	}
-	assert(false);
 }
-void MPU::reg_write(Reg reg, RegAccess access, Word val)
+void MPU::reg_write(RegWithAccess reg, Word val)
 {
-	Word& reg_value = _reg[static_cast<size_t>(reg)];
-	switch (access) {
-	case RegAccess::Reg:  reg_value = val; break;
-	case RegAccess::Far:  _mem.write<Word>(reg_value, val); break;
-	case RegAccess::Near: _mem.write<Word>(_seg + reg_value, val); break;
-	case RegAccess::Base: _mem.write<Word>(_bp + reg_value, val); break;
+	Word& reg_value = _reg[static_cast<size_t>(reg.reg)];
+	if (reg.indirect) {
+		_mem.write<Word>(reg_value, val);
+	} else {
+		reg_value = val;
 	}
 }
 
@@ -78,22 +74,19 @@ void MPU::op_halt(Word ins)
 }
 void MPU::op_move_rc(Word ins)
 {
-	auto to = suffix<Reg, 3>(ins, 0);
-	auto to_acc = suffix<RegAccess, 2>(ins, 3);
+	auto to = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 0));
 
 	auto val = fetch<Word>();
 
 	
-	reg_write(to, to_acc, val);
+	reg_write(to, val);
 }
 void MPU::op_move_rr(Word ins)
 {
-	auto to = suffix<Reg, 3>(ins, 0);
-	auto to_acc = suffix<RegAccess, 2>(ins, 3);
-	auto from = suffix<Reg, 3>(ins, 5);
-	auto from_acc = suffix<RegAccess, 2>(ins, 8);
-
-	auto val = reg_read(from, from_acc);
+	auto to = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 0));
+	auto from = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 4));
 	
-	reg_write(to, to_acc, val);
+	auto val = reg_read(from);
+	
+	reg_write(to, val);
 }

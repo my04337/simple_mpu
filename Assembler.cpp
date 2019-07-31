@@ -22,11 +22,16 @@ Assembler& Assembler::halt()
 	return emit(prefix(OpCode::Halt)); 
 }
 
-Assembler& Assembler::move(Reg to, RegAccess to_acc, Reg from, RegAccess from_acc)
+Assembler& Assembler::move(RegWithAccess to, RegWithAccess from)
 {
-	return emit(prefix(OpCode::MoveRR) | suffix<3>(to, 0) | suffix<2>(to_acc, 3) | suffix<3>(from, 5) | suffix<2>(from_acc, 8));
+	return emit(prefix(OpCode::MoveRR) | suffix<4>(to.to_bits(), 0) | suffix<4>(from.to_bits(), 4));
 }
-Assembler& Assembler::move(Reg to, RegAccess to_acc, Word val)
+Assembler& Assembler::move(RegWithAccess to, Word val)
 {
-	return emit(prefix(OpCode::MoveRC) | suffix<3>(to, 0) | suffix<2>(to_acc, 3)).emit(val);
+	return emit(prefix(OpCode::MoveRC) | suffix<4>(to.to_bits(), 0)).emit(val);
+}
+
+Assembler& Assembler::move(RegWithAccess to, SpecialReg from)
+{
+	return emit(prefix(OpCode::MoveRS) | suffix<4>(to.to_bits(), 0) | suffix<3>(from, 4));
 }
