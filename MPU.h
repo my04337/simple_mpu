@@ -21,11 +21,11 @@ namespace mpu
 		void dump()const;
 
 	private:
-		static constexpr OpCode prefix(Word ins)noexcept { return static_cast<OpCode>(ins >> 10); }
+		static constexpr OpCode prefix(Word ins)noexcept { return static_cast<OpCode>(ins >> 11); }
 		template<class T, size_t bits, typename std::enable_if_t<std::is_scalar_v<T>>* = nullptr>
 		static constexpr T suffix(Word v, int offset) { 
 			Word mask = static_cast<Word>(std::bitset<bits>().flip().to_ulong());
-			int shift = (10 - offset - bits);
+			int shift = (11 - offset - bits);
 			return static_cast<T>((v >> shift) & mask);  
 		}
 
@@ -41,6 +41,12 @@ namespace mpu
 		void op_halt(Word ins);
 		void op_move_rr(Word ins);
 		void op_move_rc(Word ins);
+		
+		void op_add(Word ins);
+		void op_sub(Word ins);
+		void op_mul(Word ins);
+		void op_div(Word ins);
+		void op_mod(Word ins);
 
 	private:
 		Memory& _mem;

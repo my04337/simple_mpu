@@ -9,17 +9,21 @@ namespace mpu
 	using Byte = uint8_t;
 	using Word = uint16_t;
 
-	// 命令プレフィックス : 6bit (サフィックスは10bitまで)
+	// 命令プレフィックス : 5bit (サフィックスは11bitまで)
 	enum class OpCode : Byte
 	{
 		Nop = 0x00,
 
-		MoveRR  = 0x01, // suf:To(Reg+Access[3+2])|From(Reg+Access[3+2]) - 汎用レジスタ→汎用レジスタ間転送
-		MoveRC  = 0x02, // suf:To(Reg+Access[3+2] & opc<0>(Val[16]) - 即値→汎用レジスタ間転送		
+		MoveRR  = 0x01, // suf:To(Reg+Access[3+1])|From(Reg+Access[3+1]) - 汎用レジスタ→汎用レジスタ間転送
+		MoveRC  = 0x02, // suf:To(Reg+Access[3+1] & opc<0>(Val[16]) - 即値→汎用レジスタ間転送		
 
-		MoveRS  = 0x03, // suf:To(Reg+Access[3+2])|From(SpecialReg[3]) - 特殊レジスタ→汎用レジスタ間転送
+		Add = 0x08,  // suf:lhs(Reg+Access[3+1])|rhs(Reg+Access[3+1])|acc(Reg[3])
+		Sub = 0x09,  // suf:lhs(Reg+Access[3+1])|rhs(Reg+Access[3+1])|acc(Reg[3])
+		Mul = 0x0A,  // suf:lhs(Reg+Access[3+1])|rhs(Reg+Access[3+1])|acc(Reg[3])
+		Div = 0x0B,  // suf:lhs(Reg+Access[3+1])|rhs(Reg+Access[3+1])|acc(Reg[3])
+		Mod = 0x0C,  // suf:lhs(Reg+Access[3+1])|rhs(Reg+Access[3+1])|acc(Reg[3])
 
-		Halt = 0x3F,
+		Halt = 0x1F,
 	};
 
 	// 汎用レジスタ指定 : 3bit
@@ -47,11 +51,6 @@ namespace mpu
 		Addr = 0x01, // 直接指定 (アドレス空間の0x0000～0x00FFまでのアクセス可能)
 	};	
 
-	// 特殊レジスタ指定 : 3bit (+ 2bit)
-	enum class SpecialReg : Byte {
-		DS = 0, // データセグメント
-	};
-
 	// アセンブラ : 命令組み立てクラス
 	class Assembler
 	{
@@ -65,18 +64,23 @@ namespace mpu
 
 		Assembler& move(RegWithAccess to, Word val);
 		Assembler& move(RegWithAccess to, RegWithAccess from);
-		Assembler& move(RegWithAccess to, SpecialReg from);
+
+		Assembler& add(RegWithAccess lhs, RegWithAccess rhs, Reg acc);
+		Assembler& sub(RegWithAccess lhs, RegWithAccess rhs, Reg acc);
+		Assembler& mul(RegWithAccess lhs, RegWithAccess rhs, Reg acc);
+		Assembler& div(RegWithAccess lhs, RegWithAccess rhs, Reg acc);
+		Assembler& mod(RegWithAccess lhs, RegWithAccess rhs, Reg acc);
 
 		
 	private:
 		Assembler& emit(Word v) { _mem.write<Word>(_pos, v); _pos += sizeof(Word); return *this; }
 
-		static constexpr Word prefix(OpCode opc)noexcept { return static_cast<Word>(opc) << 10; }
+		static constexpr Word prefix(OpCode opc)noexcept { return static_cast<Word>(opc) << 11; }
 
 		template<size_t bits, class T, typename std::enable_if_t<std::is_scalar_v<T>>* = nullptr>
 		static constexpr Word suffix(T v, int offset) {
 			Word mask = static_cast<Word>(std::bitset<bits>().flip().to_ulong());
-			int shift = (10 - offset - bits);
+			int shift = (11 - offset - bits);
 			return static_cast<Word>(static_cast<Word>(v) & mask) << shift;
 		}
 

@@ -16,16 +16,19 @@ int main()
 	Memory mem{0x100};
 	Assembler as{mem};
 	as.move(Reg::R0, 1);
-	as.move(Reg::R1, Reg::R0);
-	as.move(Reg::R4, 0x0080);
-	as.move(RegIndirect(Reg::R4), 0xCCCC);
+	as.move(Reg::R1, 0x80);
+	as.move(RegIndirect(Reg::R1), 2);
+	as.add(Reg::R0, RegIndirect(Reg::R1), Reg::R2);
 	as.halt();
 
 	std::cout << ">>> Executing" << std::endl;
 	MPU mpu{mem};
 	mpu.run();
-	mpu.dump();
+
+	std::cout << ">>> Result" << std::endl;
 	mem.dump(0, 256);
+	std::cout << std::endl;
+	mpu.dump();
 	
 	return 0;
 }

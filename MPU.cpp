@@ -30,6 +30,11 @@ void MPU::step()
 	case OpCode::Halt: op_halt(ins); break;
 	case OpCode::MoveRR: op_move_rr(ins); break;
 	case OpCode::MoveRC: op_move_rc(ins); break;
+	case OpCode::Add: op_add(ins); break;
+	case OpCode::Sub: op_sub(ins); break;
+	case OpCode::Mul: op_mul(ins); break;
+	case OpCode::Div: op_div(ins); break;
+	case OpCode::Mod: op_mod(ins); break;
 	}
 }
 
@@ -38,7 +43,7 @@ void MPU::dump()const
 	std::cout 
 		<< "PC:" << std::hex << std::setw(4) << std::setfill('0') << _pc << " "
 		<< "SP:" << std::hex << std::setw(4) << std::setfill('0') << _sp << " "
-		<< "BP:" << std::hex << std::setw(4) << std::setfill('0') << _bp << std::ends;
+		<< "BP:" << std::hex << std::setw(4) << std::setfill('0') << _bp << std::endl;
 	for(size_t i=0; i<_reg.size(); ++i) {
 		std::cout << "R" << i << ":" << std::hex << std::setw(4) << std::setfill('0') << _reg[i] << " ";
 	}
@@ -89,4 +94,49 @@ void MPU::op_move_rr(Word ins)
 	auto val = reg_read(from);
 	
 	reg_write(to, val);
+}
+void MPU::op_add(Word ins)
+{
+	auto lhs = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 0));
+	auto rhs = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 4));
+	auto acc = suffix<Reg, 3>(ins, 8);
+
+	auto val = reg_read(lhs) + reg_read(rhs);
+	reg_write(acc, val);
+}
+void MPU::op_sub(Word ins)
+{
+	auto lhs = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 0));
+	auto rhs = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 4));
+	auto acc = suffix<Reg, 3>(ins, 8);
+
+	auto val = reg_read(lhs) - reg_read(rhs);
+	reg_write(acc, val);
+}
+void MPU::op_mul(Word ins)
+{
+	auto lhs = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 0));
+	auto rhs = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 4));
+	auto acc = suffix<Reg, 3>(ins, 8);
+
+	auto val = reg_read(lhs) * reg_read(rhs);
+	reg_write(acc, val);
+}
+void MPU::op_div(Word ins)
+{
+	auto lhs = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 0));
+	auto rhs = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 4));
+	auto acc = suffix<Reg, 3>(ins, 8);
+
+	auto val = reg_read(lhs) / reg_read(rhs);
+	reg_write(acc, val);
+}
+void MPU::op_mod(Word ins)
+{
+	auto lhs = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 0));
+	auto rhs = RegWithAccess::from_bits(suffix<Byte, 4>(ins, 4));
+	auto acc = suffix<Reg, 3>(ins, 8);
+
+	auto val = reg_read(lhs) % reg_read(rhs);
+	reg_write(acc, val);
 }
