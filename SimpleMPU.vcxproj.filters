@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Memory">
+      <UniqueIdentifier>{5e21f505-e33e-4ad5-bb47-972f1a1c253d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assembler">
+      <UniqueIdentifier>{d635aa0c-58be-47fb-a164-80ca0a0a1b32}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MPU">
+      <UniqueIdentifier>{f9e8cdc1-e94f-43c3-b3c1-3dcaa30377b2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Memory.cpp">
+      <Filter>Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="SimpleMPU.cpp" />
+    <ClCompile Include="Assembler.cpp">
+      <Filter>Assembler</Filter>
+    </ClCompile>
+    <ClCompile Include="MPU.cpp">
+      <Filter>MPU</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Memory.h">
+      <Filter>Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="Assembler.h">
+      <Filter>Assembler</Filter>
+    </ClInclude>
+    <ClInclude Include="MPU.h">
+      <Filter>MPU</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
